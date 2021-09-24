@@ -1,5 +1,5 @@
 -module(advent1).
--compile(export_all).
+-export([run/0]).
 
 readlines(FileName) ->
 	{ok, Device} = file:open(FileName, [read]),
