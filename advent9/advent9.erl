@@ -1,10 +1,14 @@
 -module(advent9).
 -export([run/0, run_with_timer/0]).
--import(split_list, [divide/2]).
+
 -define(PREAMBLE_SIZE, 25).
+-define(IF(Cond,E1,E2), (case (Cond) of true -> (E1); false -> (E2) end)).
 
 % This link https://stackoverflow.com/questions/12534898/splitting-a-list-in-equal-sized-chunks-in-erlang/12538415 can help in the second part
 % https://stackoverflow.com/questions/31395608/how-to-split-a-list-of-strings-into-given-number-of-lists-in-erlang
+
+% IF MACRO
+% https://stackoverflow.com/questions/6092972/how-to-write-a-b-x-y-in-erlang-in-other-words-how-to-write-a-c-style-ter
 
 is_weakness(L, N) -> [] == [A+B || A <- L, B <- L, A /= B, A+B == N].
 
@@ -36,8 +40,9 @@ run() ->
 	L = readlines("input.txt"),
 	{Index, N} = process_list(L, 1),
 	Set = find_contiguous_set(N, L, Index),
-	Sum = get_min(Set) + get_max(Set),
-	{ok, {weak_number, N}, {set, Set}, {encryption_weakness, Sum}}.
+	{Min, Max} = min_max(Set),
+	% Sum = get_min(Set) + get_max(Set),
+	{ok, {weak_number, N}, {set, Set}, {encryption_weakness, Min+Max}}.
 
 run_with_timer() -> 
 	{Micro, Result} = timer:tc(advent9, run, []),
@@ -45,17 +50,27 @@ run_with_timer() ->
 	Result.
 
 
-get_max([H|T]) -> get_max(T, H);
-get_max([]) -> {error, empty_list}.
-get_max([H|T], Cur) when Cur < H -> get_max(T, H);
-get_max([H|T], Cur) when Cur >= H -> get_max(T, Cur);
-get_max([], Cur) -> Cur.
+% get_max([]) -> {error, empty_list};
+% get_max([H|T]) -> get_max(T, H).
 
-get_min([H|T]) -> get_min(T, H).
-get_min([H|T], Cur) when Cur > H -> get_min(T, H);
-get_min([H|T], Cur) when Cur =< H -> get_min(T, Cur);
-get_min([], Cur) -> Cur.
+% get_max([H|T], Cur) when Cur < H -> get_max(T, H);
+% get_max([H|T], Cur) when Cur >= H -> get_max(T, Cur);
+% get_max([], Cur) -> Cur.
 
+% get_min([H|T]) -> get_min(T, H).
+% get_min([H|T], Cur) when Cur > H -> get_min(T, H);
+% get_min([H|T], Cur) when Cur =< H -> get_min(T, Cur);
+% get_min([], Cur) -> Cur.
+
+% Returns a tuple {Min, Max}
+min_max([]) -> {error, empty_list};
+min_max([H|T]) -> min_max(H, H, T).
+
+min_max(Min, Max, []) -> {Min, Max};
+min_max(Min, Max, [H|T]) -> 
+	Max2 = ?IF(H >= Max, H, Max),
+	Min2 = ?IF(H =< Min, H, Min),
+	min_max(Min2, Max2, T).
 
 % Find the contiguous set adding last number with previuos up to the result (start from the last number before the weak number)
 find_contiguous_set(N, List, Index) when is_integer(N), is_integer(Index), is_list(List), Index > 0 -> 
